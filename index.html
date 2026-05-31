@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Laurel Games</title>
+<meta name="description" content="Laurel Games — contact: hi@laurel.games" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    background:#2b2520;
+    font-family:"Old Standard TT", Georgia, "Times New Roman", serif;
+    color:#211c16;
+    overflow:hidden;
+  }
+
+  /* full-screen original "impossible blocks" print (Escher-inspired, not a copy) */
+  #print{ position:fixed; inset:0; width:100vw; height:100vh; display:block; }
+
+  /* static lithograph grain — no animation */
+  .grain{
+    position:fixed; inset:0; pointer-events:none; z-index:2;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+    mix-blend-mode:overlay; opacity:.1;
+  }
+
+  /* small contact plate */
+  .plate{
+    position:fixed; left:50%; bottom:clamp(22px,5vh,46px);
+    transform:translateX(-50%); z-index:3; text-align:center;
+    padding:14px 26px;
+    background:rgba(231,220,192,.9);
+    border:1px solid rgba(26,22,17,.4);
+    box-shadow:0 12px 38px -18px rgba(0,0,0,.7);
+    backdrop-filter:blur(2px);
+  }
+  .mark{
+    display:block; width:34px; height:34px; margin:0 auto 10px;
+    color:#211c16;
+  }
+  .mark svg{ width:100%; height:100%; display:block; }
+  .word{
+    font-family:"Libre Caslon Display", "Old Standard TT", serif; font-weight:400;
+    font-size:1.6rem; line-height:1.1; letter-spacing:.12em; text-transform:uppercase; padding-left:.12em; color:#211c16;
+    /* thin masthead rule beneath the nameplate */
+    border-bottom:1px solid rgba(26,22,17,.4); padding-bottom:7px;
+  }
+  .contact{
+    font-family:"Old Standard TT", serif; font-weight:400;
+    margin-top:8px; font-size:.82rem; letter-spacing:.06em; color:#4a4339;
+  }
+  .contact a{ color:#211c16; text-decoration:none; border-bottom:1px solid rgba(26,22,17,.45); }
+  .contact a:hover{ color:#46583a; border-color:#46583a; }
+</style>
+</head>
+<body>
+  <svg id="print" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="plate">
+    <span class="mark" aria-hidden="true">
+      <!-- impossible / Necker cube brand mark -->
+      <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="7" y="15" width="20" height="20"/>
+        <rect x="17" y="7" width="20" height="20"/>
+        <path d="M7 15 L17 7"/><path d="M27 15 L37 7"/>
+        <path d="M7 35 L17 27"/><path d="M27 35 L37 27"/>
+      </svg>
+    </span>
+    <div class="word">Laurel&nbsp;Games</div>
+    <div class="contact">contact:&nbsp;<a href="mailto:hi@laurel.games">hi@laurel.games</a></div>
+  </div>
+
+<script>
+/* ----------------------------------------------------------------
+   Original Escher-style "impossible blocks" field: a hexagon split
+   into three rhombi reads as an isometric cube; packed edge-to-edge
+   the cubes form an ambiguous up/down staircase lattice. Three warm
+   tones (top / left / right faces) give the engraved, gravity-
+   defying look without copying any specific Escher print.
+---------------------------------------------------------------- */
+const NS = "http://www.w3.org/2000/svg";
+const R  = 64;                         // cube radius
+const TOP = "#e3d7b8", LEFT = "#9a8a63", RIGHT = "#6c5d44", LINE = "#332a1e";
+const SQ3 = Math.sqrt(3);
+
+const svg = document.getElementById("print");
+// canvas large enough to cover any screen; slice crops the overflow
+const W = 1920, H = 1280;
+svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+// dark base so any sub-pixel seams stay in-palette
+const bg = document.createElementNS(NS, "rect");
+bg.setAttribute("width", W); bg.setAttribute("height", H); bg.setAttribute("fill", RIGHT);
+svg.appendChild(bg);
+
+// pointy-top hexagon vertices (k = 0..5), angle = 60k - 90
+const hexV = (cx, cy) => {
+  const p = [];
+  for (let k = 0; k < 6; k++){
+    const a = (60*k - 90) * Math.PI/180;
+    p.push([cx + R*Math.cos(a), cy + R*Math.sin(a)]);
+  }
+  return p; // [top, upper-right, lower-right, bottom, lower-left, upper-left]
+};
+const poly = (pts, fill) => {
+  const el = document.createElementNS(NS, "path");
+  el.setAttribute("d", "M" + pts.map(p => p.map(n => n.toFixed(1)).join(" ")).join(" L") + " Z");
+  el.setAttribute("fill", fill);
+  el.setAttribute("stroke", LINE);
+  el.setAttribute("stroke-width", "1.2");
+  el.setAttribute("stroke-linejoin", "round");
+  svg.appendChild(el);
+};
+
+const drawCube = (cx, cy) => {
+  const V = hexV(cx, cy);
+  const C = [cx, cy];
+  poly([V[5], V[0], V[1], C], TOP);   // top face
+  poly([C, V[1], V[2], V[3]], RIGHT); // right face
+  poly([C, V[3], V[4], V[5]], LEFT);  // left face
+};
+
+// hex packing: horizontal step √3·R, vertical step 1.5·R, odd rows offset
+const dx = SQ3 * R, dy = 1.5 * R;
+for (let row = -1; row * dy < H + R; row++){
+  const offset = (row & 1) ? dx/2 : 0;
+  for (let col = -1; col * dx < W + R; col++){
+    drawCube(col*dx + offset, row*dy);
+  }
+}
+</script>
+</body>
+</html>
