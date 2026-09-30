@@ -1,0 +1,4 @@
+# Laurel Games — sellers authorised to sell ad space in our apps (https://iabtechlab.com/ads-txt/)
+
+# Keystone: AdMob mediation
+google.com, pub-6864268079489111, DIRECT, f08c47fec0942fa0
