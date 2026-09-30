@@ -1,0 +1,26 @@
+/* Laurel Games text pages (per-app privacy and support). Same type and
+   palette as the home page's contact plate: warm paper, engraving ink. */
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ background:#e7dcc0; }
+body{
+  font-family:"Old Standard TT", Georgia, "Times New Roman", serif;
+  color:#211c16; background:#e7dcc0;
+  line-height:1.65; font-size:1.05rem;
+  padding:clamp(20px,5vw,56px) 16px 64px;
+}
+main{ max-width:42rem; margin:0 auto; }
+.masthead{ display:flex; align-items:center; gap:12px; text-decoration:none; color:#211c16;
+  border-bottom:1px solid rgba(26,22,17,.4); padding-bottom:10px; margin-bottom:34px; }
+.masthead svg{ width:28px; height:28px; flex:none; }
+.masthead span{ font-family:"Libre Caslon Display", "Old Standard TT", serif; font-size:1.15rem;
+  letter-spacing:.12em; text-transform:uppercase; }
+h1{ font-family:"Libre Caslon Display", "Old Standard TT", serif; font-weight:400;
+  font-size:clamp(2rem,6vw,2.6rem); line-height:1.1; }
+.sub{ font-style:italic; color:#4a4339; margin:6px 0 30px; }
+h2{ font-size:1.05rem; font-weight:700; margin:28px 0 6px; }
+p, li{ margin:0 0 12px; }
+ul{ padding-left:1.2rem; }
+a{ color:#211c16; text-decoration:none; border-bottom:1px solid rgba(26,22,17,.45); }
+a:hover{ color:#46583a; border-color:#46583a; }
+footer{ margin-top:44px; padding-top:12px; border-top:1px solid rgba(26,22,17,.4);
+  font-size:.9rem; color:#4a4339; }
