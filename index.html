@@ -87,7 +87,7 @@
 </style>
 </head>
 <body>
-  <canvas id="scene" role="img" aria-label="An impressionist painting at blue hour: a child sits beneath a giant laurel tree, playing a game on a glowing handheld, with a lake and the last light of sunset beyond."></canvas>
+  <canvas id="scene" role="img" aria-label="An impressionist painting at blue hour: a giant laurel tree on the bank of a lake, the last light of sunset lying on the water."></canvas>
   <div class="tooth" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
 
@@ -102,11 +102,18 @@
    The painting. Everything is laid down as brush dabs from a seeded
    random stream, so the picture is the same on every visit and is
    painted fresh for whatever screen it is on. Back to front: sky,
-   far hills, lake, near bank, the tree, and the child under it.
+   far hills, lake, near bank, and the tree.
 ------------------------------------------------------------------ */
 (function(){
   const canvas = document.getElementById("scene");
-  const ctx = canvas.getContext("2d", { alpha:false });
+  const view = canvas.getContext("2d", { alpha:false });
+  // The picture is laid down in layers so the water can move on its own:
+  // `water` keeps the still lake, `front` holds everything painted over it
+  // (bank and tree), and `view` is the canvas on the page.
+  const water = document.createElement("canvas"), waterCtx = water.getContext("2d", { alpha:false });
+  const front = document.createElement("canvas"), frontCtx = front.getContext("2d");
+  let ctx = view;                                   // whichever layer is being painted
+  const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
   const TAU = Math.PI * 2;
 
   // ---- seeded random -------------------------------------------------
@@ -199,8 +206,12 @@
   function paint(){
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = window.innerWidth, H = window.innerHeight;
-    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const Wd = Math.round(W * dpr), Hd = Math.round(H * dpr);
+    canvas.width = Wd; canvas.height = Hd;
+    front.width = Wd; front.height = Hd;
+    view.setTransform(dpr, 0, 0, dpr, 0, 0);
+    frontCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx = view;
     reseed(0x1A08E1);
 
     const portrait = W < H * 1.05;
@@ -311,28 +322,56 @@
         const w = R(16, 46) * S * (0.7 + depth), h = R(2.5, 5) * S * (0.8 + depth * .6);
         dab(x, y, w, h, RG() * .05, c, R(.4, .75));
       }
-      // the afterglow lying on the water in broken strokes
+      // The light on the water is not fixed in the paint: it is laid on live,
+      // stroke by stroke, each on its own pulse (see render). Here they are
+      // only chosen: the afterglow lying on the lake in broken strokes...
+      glints.length = 0;
+      const pre = c => `rgba(${c[0]|0},${c[1]|0},${c[2]|0},`;
+      const glint = (x, y, len, wid, c, a, quick) => glints.push({
+        x, y, len, wid, col: pre(c), a,
+        w1: quick ? R(2, 5) : R(.3, .9), p1: R(0, TAU),        // the pulse, slow or quick
+        w2: quick ? R(4, 8) : R(1, 2.2), p2: R(0, TAU),
+        pw: quick ? R(4, 7) : R(1.2, 2.2)                       // quick ones stay dark and flash
+      });
       const rows = (H - yH) / (5 * S);
       for (let i = 0; i < rows; i++){
         const y = yH + i * 5 * S + R(0, 3 * S);
         const depth = (y - yH) / (H - yH);
         if (y > shore(gx) - 20 * S) break;
         const spread = W * (.02 + .12 * depth);
-        for (let k = 0; k < 2; k++){
+        for (let k = 0; k < 4; k++){
           const x = gx + RG() * spread;
           const len = R(14, 60) * S * (0.6 + depth);
           const c = mix(hex("#f3c48f"), hex("#d99a80"), depth);
-          stroke(x - len / 2, y, len, 0, R(2, 4) * S, jit(c, .02, .05, .05), R(.25, .55) * (1 - depth * .5));
+          glint(x, y, len, R(2, 4) * S, jit(c, .02, .05, .05), R(.3, .65) * (1 - depth * .5), false);
+        }
+        // ...the sparkles where a wave catches the sun, out in the far and middle water...
+        if (depth < .7) for (let k = 0; k < 2; k++){
+          if (rnd() > .55) continue;
+          glint(gx + RG() * spread * .8, y, R(3, 9) * S, R(1.2, 2.2) * S, jit(hex("#fbe0b4"), .02, .05, .04), R(.5, .9), true);
         }
       }
-      // faint ripple lines
-      for (let i = 0; i < A / 9000; i++){
+      // ...and the ripple lines catching the sky across the whole lake
+      for (let i = 0; i < A / 4500; i++){
         const x = R(0, W), y = R(yH + 10 * S, H);
         if (y > shore(x) - 10 * S) continue;
         const c = jit(mix(lake(x, y), hex("#c9d3f5"), .45), .03, .05, .04);
-        stroke(x, y, R(30, 120) * S, RG() * .02, R(1, 1.8) * S, c, R(.12, .3));
+        glint(x, y, R(30, 120) * S, R(1, 1.8) * S, c, R(.15, .4), false);
       }
+      // keep the still lake aside: every frame re-lays it with the waves through it
+      let yMax = 0;
+      for (let x = 0; x <= W; x += 6) yMax = Math.max(yMax, shore(x));
+      const bandTop = Math.floor(yH * dpr), bandDev = Hd - bandTop;
+      water.width = Wd; water.height = bandDev;
+      waterCtx.drawImage(canvas, 0, bandTop, Wd, bandDev, 0, 0, Wd, bandDev);
+      live = {
+        W, H, dpr, S, gx, yH, Wd, bandTop, bandDev,
+        waterDev: Math.min(bandDev, Math.ceil((yMax + 8 * S) * dpr) - bandTop),
+        rowDev: Math.max(2, Math.round(2 * S * dpr)),
+        k0: TAU / (90 * S), k1: TAU / (26 * S), k2: TAU / (11 * S), k3: TAU / (40 * S)
+      };
     }
+    ctx = frontCtx;                       // from here on everything sits over the water
 
     // ---- near bank ----
     {
@@ -371,21 +410,43 @@
     const canopy = { x: W * ccx, y: H * ccy, rx: W * crx, ry: H * cry };
     const yBase = shore(tx0) + H * .10, yTop = H * .40;
     const trunkX = y => tx0 + W * .018 * Math.sin((yBase - y) / (yBase - yTop) * 2.2);  // gentle lean
-    const trunkW = y => tw * lerp(1.15, .55, smooth((yBase - y) / (yBase - yTop)));
+    // A trunk hardly tapers over the height we see of it. It swells into
+    // buttress roots at the ground, and its edges wander a little on the way up.
+    const wobL = noise1(3 / (yBase - yTop), 2, 0xB4), wobR = noise1(3 / (yBase - yTop), 2, 0xC7);
+    const flare = y => Math.pow(clamp(1 - (yBase - y) / (yBase - yTop), 0, 1), 14);
+    const trunkW = y => tw * lerp(1, .8, smooth((yBase - y) / (yBase - yTop)));
+    const edgeL = y => trunkX(y) - trunkW(y) / 2 - tw * (.7 * flare(y) + .08 * (wobL(y) - .5));
+    const edgeR = y => trunkX(y) + trunkW(y) / 2 + tw * (.45 * flare(y) + .08 * (wobR(y) - .5));
     {
-      // silhouette with root flare
+      const bark = hex("#1a1520");
       ctx.beginPath();
-      ctx.moveTo(tx0 - tw * 1.3, yBase + 6);
-      for (let y = yBase; y >= yTop; y -= 8) ctx.lineTo(trunkX(y) - trunkW(y) / 2, y);
-      for (let y = yTop; y <= yBase; y += 8) ctx.lineTo(trunkX(y) + trunkW(y) / 2, y);
-      ctx.lineTo(tx0 + tw * 1.3, yBase + 6);
-      ctx.closePath(); ctx.fillStyle = css(hex("#1a1520"), 1); ctx.fill();
+      ctx.moveTo(edgeL(yBase), yBase + 3);
+      for (let y = yBase; y >= yTop; y -= 4) ctx.lineTo(edgeL(y), y);
+      for (let y = yTop; y <= yBase; y += 4) ctx.lineTo(edgeR(y), y);
+      ctx.lineTo(edgeR(yBase), yBase + 3);
+      ctx.closePath(); ctx.fillStyle = css(bark, 1); ctx.fill();
+      // roots running out into the grass, thick at the trunk and thinning away
+      [[-1, 1.7, .10], [-1, 1.1, .04], [1, 1.3, .12], [1, .8, .03]].forEach(([side, reach, drop]) => {
+        const x0 = trunkX(yBase) + side * tw * .3, x1 = trunkX(yBase) + side * tw * reach;
+        const y0 = yBase - tw * .05, y1 = yBase + tw * drop * 2;
+        const top = [], bot = [], rim = [];
+        for (let k = 0; k <= 1.001; k += .1){
+          const x = lerp(x0, x1, k), y = lerp(y0, y1, k * k), hh = tw * lerp(.14, .02, k);
+          top.push([x, y - hh / 2]); bot.push([x, y + hh / 2]); rim.push([x, y - hh / 2 + hh * .4]);
+        }
+        const poly = (pts, c, a) => {
+          ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+          ctx.closePath(); ctx.fillStyle = css(c, a); ctx.fill();
+        };
+        poly(top.concat(bot.reverse()), bark, 1);
+        poly(top.concat(rim.reverse()), hex("#2a2333"), .5);                 // a little sky along their tops
+      });
       // bark in vertical dabs: cool on the shadow side, warm rim toward the afterglow
       const n = (yBase - yTop) * tw / (18 * S * S);
       for (let i = 0; i < n; i++){
-        const y = R(yTop - 10, yBase + 4), hw = trunkW(y) / 2;
+        const y = R(yTop - 10, yBase + 2);
         const u = RG() * .95;                                  // -1 (left edge) .. 1 (right edge)
-        const x = trunkX(y) + u * hw;
+        const x = lerp(edgeL(y), edgeR(y), (u + 1) / 2);
         let c;
         if (u > .68) c = mix(hex("#33262a"), hex("#7a5442"), (u - .68) / .32);   // last light on the bark
         else if (u < -.45) c = mix(hex("#1a1822"), hex("#262a42"), (-u - .45) / .55);
@@ -471,63 +532,75 @@
       }
     }
 
-    // ---- the child, sitting against the trunk, lit by the game ----
-    {
-      const h = H * .115;                                     // seat to crown of head
-      const kx = trunkX(yBase - h * .3) + trunkW(yBase - h * .3) / 2 + h * .05;
-      const ky = yBase - 2 * S;                               // where they sit
-      const skin = hex("#141327");
-      const part = (x, y, w, hh, rot, c = skin, a = .96) => dab(kx + x * h, ky + y * h, w * h, hh * h, rot, c, a);
-      // pool of light on the grass first, so the figure sits over it
-      const dx = kx + h * .48, dy = ky - h * .5;               // the handheld
-      const glow = hex("#cfe9b8");
-      ctx.globalCompositeOperation = "lighter";
-      {
-        const g = ctx.createRadialGradient(dx, dy + h * .1, 0, dx, dy + h * .1, h * 1.25);
-        g.addColorStop(0, css(glow, .28)); g.addColorStop(.35, css(glow, .10)); g.addColorStop(1, css(glow, 0));
-        ctx.fillStyle = g; ctx.fillRect(dx - h * 1.3, dy - h * 1.2, h * 2.6, h * 2.5);
-        for (let i = 0; i < 60; i++){                         // lit grass blades around them
-          const a = rnd() * Math.PI, r = R(.2, 1.0) * h;
-          const x = dx + Math.cos(a) * r * 1.3, y = ky + R(-.02, .12) * h;
-          stroke(x, y, R(4, 10) * S, -TAU / 4 + RG() * .5, R(1, 1.8) * S, glow, R(.08, .3) * (1 - r / h));
-        }
-      }
-      ctx.globalCompositeOperation = "source-over";
-      // legs: knees drawn up
-      part(.32, -.22, .40, .17, -.55);        // thigh
-      part(.50, -.10, .16, .36, .15);         // shin
-      part(.54, .02, .16, .09, 0);            // foot
-      part(.24, -.18, .34, .15, -.5, hex("#191830"));   // far thigh
-      // body leaning back on the bark, arms forward to the handheld
-      part(.14, -.48, .34, .58, .12);         // torso
-      part(.30, -.55, .30, .11, -.35);        // upper arm
-      part(.42, -.48, .22, .09, .55);         // forearm
-      // head, tilted down toward the screen
-      part(.22, -.86, .30, .32, .1);
-      part(.20, -.94, .32, .22, .05, hex("#100f22"));   // hair
-      // the handheld and its light on the face, hands and knees
-      ctx.fillStyle = css(hex("#eef8df"), .95);
-      ctx.beginPath(); ctx.ellipse(dx, dy, h * .075, h * .05, .1, 0, TAU); ctx.fill();
-      ctx.globalCompositeOperation = "lighter";
-      const lit = (x, y, w, hh, rot, a) => dab(kx + x * h, ky + y * h, w * h, hh * h, rot, glow, a);
-      lit(.31, -.78, .10, .15, .3, .32);       // face
-      lit(.27, -.71, .09, .05, .2, .25);       // chin / neck
-      lit(.44, -.52, .10, .07, .5, .45);       // hands
-      lit(.36, -.40, .16, .07, -.4, .30);      // chest
-      lit(.50, -.30, .12, .08, -.6, .30);      // knee
-      lit(.46, -.20, .10, .06, .1, .2);        // shin
-      {
-        const g = ctx.createRadialGradient(dx, dy, 0, dx, dy, h * .6);
-        g.addColorStop(0, css(glow, .35)); g.addColorStop(1, css(glow, 0));
-        ctx.fillStyle = g; ctx.fillRect(dx - h * .6, dy - h * .6, h * 1.2, h * 1.2);
-      }
-      ctx.globalCompositeOperation = "source-over";
-    }
-
+    ctx = view;
+    view.drawImage(front, 0, 0, Wd, Hd, 0, 0, W, H);
+    render(motionQuery.matches ? 12 : performance.now() / 1000);
     canvas.classList.add("ready");
   }
 
+  // ---- the water, alive -----------------------------------------------
+  // The still lake is re-laid in thin rows, each pushed a little sideways
+  // and sampled a little above or below where it belongs, so the reflection
+  // wobbles as though the surface were moving. Then the light on the water
+  // is painted over it, every stroke brightening and fading on its own pulse.
+  const glints = [];
+  let live = null;
+  function waveX(y, t){
+    const { S, yH, H, k0, k1, k2 } = live, d = (y - yH) / (H - yH);
+    return S * (.5 + 6 * d * d) * (.45 * Math.sin(y * k1 + t * 1.3) + .3 * Math.sin(y * k2 - t * 2.1 + 1.7) + .25 * Math.sin(y * k0 + t * .55));
+  }
+  function render(t){
+    if (!live) return;
+    const { W, H, dpr, S, gx, yH, Wd, bandTop, bandDev, waterDev, rowDev, k3 } = live;
+    const top = bandTop / dpr;
+    view.save();
+    view.beginPath(); view.rect(0, top, W, H - top); view.clip();
+    for (let sy = 0; sy < waterDev; sy += rowDev){
+      const y = top + sy / dpr, d = (y - yH) / (H - yH);
+      const dy = S * dpr * (.4 + 3.5 * d * d) * Math.sin(y * k3 + t * .8 + .6);
+      view.drawImage(water, 0, clamp(sy + dy, 0, bandDev - rowDev), Wd, rowDev, waveX(y, t), y, W, rowDev / dpr);
+    }
+    // the afterglow's soft column on the water, breathing
+    {
+      const r = W * .14, breath = .05 + .035 * Math.sin(t * .31) + .02 * Math.sin(t * .83 + 1);
+      view.save();
+      view.globalCompositeOperation = "lighter";
+      view.translate(gx, yH); view.scale(1, (H - yH) * .5 / r);
+      const g = view.createRadialGradient(0, 0, 0, 0, 0, r);
+      g.addColorStop(0, "rgba(243,196,143," + breath.toFixed(3) + ")");
+      g.addColorStop(1, "rgba(243,196,143,0)");
+      view.fillStyle = g; view.beginPath(); view.arc(0, 0, r, 0, Math.PI); view.closePath(); view.fill();
+      view.restore();
+    }
+    view.lineCap = "round";
+    for (const g of glints){
+      const v = .65 * Math.sin(t * g.w1 + g.p1) + .35 * Math.sin(t * g.w2 + g.p2);
+      const a = g.a * Math.pow((v + 1) * .5, g.pw);
+      if (a < .01) continue;
+      const x = g.x + waveX(g.y, t);            // riding the same wave as the water under it
+      view.beginPath(); view.moveTo(x - g.len / 2, g.y); view.lineTo(x + g.len / 2, g.y);
+      view.lineWidth = g.wid; view.strokeStyle = g.col + a.toFixed(3) + ")"; view.stroke();
+    }
+    // the bank and the tree go back on top
+    view.drawImage(front, 0, bandTop, Wd, bandDev, 0, top, W, bandDev / dpr);
+    view.restore();
+  }
+  let raf = 0, prevFrame = 0;
+  function loop(now){
+    raf = requestAnimationFrame(loop);
+    if (now - prevFrame < 30) return;            // ~30fps is plenty for slow water, and kind to batteries
+    prevFrame = now;
+    render(now / 1000);
+  }
+  function setMotion(){
+    cancelAnimationFrame(raf); raf = 0;
+    if (motionQuery.matches) render(12);         // one quiet moment, held still
+    else raf = requestAnimationFrame(loop);
+  }
+
   paint();
+  setMotion();
+  motionQuery.addEventListener("change", setMotion);
   let last = [window.innerWidth, window.innerHeight], timer = 0;
   window.addEventListener("resize", () => {
     clearTimeout(timer);
