@@ -1,26 +1,24 @@
-/* Laurel Games text pages (per-app privacy and support). Same type and
-   palette as the home page's contact plate: warm paper, engraving ink. */
+/* Laurel Games text pages (per-app privacy and support). Ivory paper and the
+   brand's deep-blue ink, set in the same Bodoni as the home page. */
 *{ box-sizing:border-box; margin:0; padding:0; }
-html{ background:#e7dcc0; }
+html{ background:#f3e9d6; }
 body{
-  font-family:"Old Standard TT", Georgia, "Times New Roman", serif;
-  color:#211c16; background:#e7dcc0;
-  line-height:1.65; font-size:1.05rem;
+  font-family:"Bodoni Moda", "Bodoni 72", Didot, "Times New Roman", serif;
+  color:#1b2140; background:#f3e9d6;
+  line-height:1.7; font-size:1.1rem;
   padding:clamp(20px,5vw,56px) 16px 64px;
 }
-main{ max-width:42rem; margin:0 auto; }
-.masthead{ display:flex; align-items:center; gap:12px; text-decoration:none; color:#211c16;
-  border-bottom:1px solid rgba(26,22,17,.4); padding-bottom:10px; margin-bottom:34px; }
-.masthead svg{ width:28px; height:28px; flex:none; }
-.masthead span{ font-family:"Libre Caslon Display", "Old Standard TT", serif; font-size:1.15rem;
-  letter-spacing:.12em; text-transform:uppercase; }
-h1{ font-family:"Libre Caslon Display", "Old Standard TT", serif; font-weight:400;
-  font-size:clamp(2rem,6vw,2.6rem); line-height:1.1; }
-.sub{ font-style:italic; color:#4a4339; margin:6px 0 30px; }
-h2{ font-size:1.05rem; font-weight:700; margin:28px 0 6px; }
+main{ max-width:40rem; margin:0 auto; }
+.masthead{ display:flex; align-items:center; gap:12px; text-decoration:none; color:#15205a;
+  border-bottom:1px solid rgba(21,32,90,.3); padding-bottom:12px; margin-bottom:34px; }
+.masthead svg{ width:34px; height:34px; flex:none; }
+.masthead span{ font-size:1.25rem; font-weight:500; letter-spacing:.03em; }
+h1{ font-weight:500; font-size:clamp(2.2rem,6vw,3rem); line-height:1.05; color:#15205a; }
+.sub{ font-style:italic; color:#4a5078; margin:6px 0 30px; }
+h2{ font-size:1.15rem; font-weight:700; margin:30px 0 6px; color:#15205a; }
 p, li{ margin:0 0 12px; }
 ul{ padding-left:1.2rem; }
-a{ color:#211c16; text-decoration:none; border-bottom:1px solid rgba(26,22,17,.45); }
-a:hover{ color:#46583a; border-color:#46583a; }
-footer{ margin-top:44px; padding-top:12px; border-top:1px solid rgba(26,22,17,.4);
-  font-size:.9rem; color:#4a4339; }
+a{ color:#15205a; text-decoration:none; border-bottom:1px solid rgba(21,32,90,.4); }
+a:hover{ color:#3c5aa6; border-color:#3c5aa6; }
+footer{ margin-top:44px; padding-top:12px; border-top:1px solid rgba(21,32,90,.3);
+  font-size:.95rem; color:#4a5078; }

@@ -2,137 +2,542 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Laurel Games</title>
-<meta name="description" content="Laurel Games — contact: hi@laurel.games" />
+<meta name="description" content="Laurel Games, a small studio making casual mobile games. Contact: hi@laurel.games" />
+<meta name="theme-color" content="#1b2a5e" />
+<meta property="og:title" content="Laurel Games" />
+<meta property="og:description" content="A small studio making casual mobile games." />
+<meta property="og:image" content="https://laurel.games/og.jpg" />
+<meta property="og:url" content="https://laurel.games/" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&display=swap" rel="stylesheet" />
 <style>
+  :root{
+    --ivory:#f3e9d6;
+    --glow:#f0c9a4;
+    --night:#141f4d;
+  }
   *{ box-sizing:border-box; margin:0; padding:0; }
   html,body{ height:100%; }
   body{
-    background:#2b2520;
-    font-family:"Old Standard TT", Georgia, "Times New Roman", serif;
-    color:#211c16;
+    background:var(--night) linear-gradient(#141f4d 0%, #4f66b0 50%, #e8b48a 58%, #1c2a4a 60%, #131a30 100%);
+    color:var(--ivory);
+    font-family:"Bodoni Moda", "Bodoni 72", Didot, "Times New Roman", serif;
     overflow:hidden;
+    -webkit-font-smoothing:antialiased;
   }
 
-  /* full-screen original "impossible blocks" print (Escher-inspired, not a copy) */
-  #print{ position:fixed; inset:0; width:100vw; height:100vh; display:block; }
-
-  /* static lithograph grain — no animation */
-  .grain{
+  /* the painting */
+  #scene{
+    position:fixed; inset:0; width:100%; height:100%; display:block;
+    opacity:0; transition:opacity 1.2s ease-out;
+  }
+  #scene.ready{ opacity:1; }
+  @media (prefers-reduced-motion: reduce){
+    #scene{ transition:none; }
+  }
+  /* linen tooth over the paint, and a soft darkening at the corners */
+  .tooth{
     position:fixed; inset:0; pointer-events:none; z-index:2;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
-    mix-blend-mode:overlay; opacity:.1;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode:soft-light; opacity:.22;
+  }
+  .vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:2;
+    background:radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(8,10,28,.45) 100%);
   }
 
-  /* small contact plate */
-  .plate{
-    position:fixed; left:50%; bottom:clamp(22px,5vh,46px);
-    transform:translateX(-50%); z-index:3; text-align:center;
-    padding:14px 26px;
-    background:rgba(231,220,192,.9);
-    border:1px solid rgba(26,22,17,.4);
-    box-shadow:0 12px 38px -18px rgba(0,0,0,.7);
-    backdrop-filter:blur(2px);
+  /* the only two things on the page */
+  .brand{
+    position:fixed; z-index:3;
+    top:calc(28px + env(safe-area-inset-top)); left:calc(30px + env(safe-area-inset-left));
+    display:flex; align-items:center; gap:14px;
+    color:var(--ivory); text-decoration:none;
+    filter:drop-shadow(0 1px 1px rgba(8,10,28,.55)) drop-shadow(0 4px 22px rgba(8,10,28,.45));
   }
-  .mark{
-    display:block; width:34px; height:34px; margin:0 auto 10px;
-    color:#211c16;
-  }
-  .mark svg{ width:100%; height:100%; display:block; }
-  .word{
-    font-family:"Libre Caslon Display", "Old Standard TT", serif; font-weight:400;
-    font-size:1.6rem; line-height:1.1; letter-spacing:.12em; text-transform:uppercase; padding-left:.12em; color:#211c16;
-    /* thin masthead rule beneath the nameplate */
-    border-bottom:1px solid rgba(26,22,17,.4); padding-bottom:7px;
+  .brand svg{ width:46px; height:46px; flex:none; }
+  .brand h1{
+    font-size:30px; font-weight:500; font-variation-settings:"opsz" 48;
+    line-height:1; letter-spacing:.03em; white-space:nowrap;
   }
   .contact{
-    font-family:"Old Standard TT", serif; font-weight:400;
-    margin-top:8px; font-size:.82rem; letter-spacing:.06em; color:#4a4339;
+    position:fixed; z-index:3;
+    right:calc(32px + env(safe-area-inset-right)); bottom:calc(26px + env(safe-area-inset-bottom));
+    font-style:italic; font-weight:400; font-size:20px; font-variation-settings:"opsz" 24;
+    letter-spacing:.01em;
+    color:var(--ivory); text-decoration:none;
+    text-shadow:0 1px 1px rgba(8,10,28,.6), 0 3px 18px rgba(8,10,28,.5);
+    border-bottom:1px solid rgba(243,233,214,.35); padding-bottom:2px;
+    transition:border-color .2s;
   }
-  .contact a{ color:#211c16; text-decoration:none; border-bottom:1px solid rgba(26,22,17,.45); }
-  .contact a:hover{ color:#46583a; border-color:#46583a; }
+  .contact:hover{ border-color:var(--glow); }
+  .brand:focus-visible, .contact:focus-visible{
+    outline:2px solid var(--glow); outline-offset:6px; border-radius:2px;
+  }
+  @media (max-width:600px){
+    .brand{ top:calc(20px + env(safe-area-inset-top)); left:calc(20px + env(safe-area-inset-left)); gap:11px; }
+    .brand svg{ width:38px; height:38px; }
+    .brand h1{ font-size:24px; }
+    .contact{ right:auto; left:calc(22px + env(safe-area-inset-left)); bottom:calc(22px + env(safe-area-inset-bottom)); font-size:18px; }
+  }
 </style>
 </head>
 <body>
-  <svg id="print" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
-  <div class="grain" aria-hidden="true"></div>
+  <canvas id="scene" role="img" aria-label="An impressionist painting at blue hour: a child sits beneath a giant laurel tree, playing a game on a glowing handheld, with a lake and the last light of sunset beyond."></canvas>
+  <div class="tooth" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
 
-  <div class="plate">
-    <span class="mark" aria-hidden="true">
-      <!-- impossible / Necker cube brand mark -->
-      <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">
-        <rect x="7" y="15" width="20" height="20"/>
-        <rect x="17" y="7" width="20" height="20"/>
-        <path d="M7 15 L17 7"/><path d="M27 15 L37 7"/>
-        <path d="M7 35 L17 27"/><path d="M27 35 L37 27"/>
-      </svg>
-    </span>
-    <div class="word">Laurel&nbsp;Games</div>
-    <div class="contact">contact:&nbsp;<a href="mailto:hi@laurel.games">hi@laurel.games</a></div>
-  </div>
+  <a class="brand" href="/">
+    <svg viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M25.25 84.92 C25.09 84.10 24.55 81.62 24.28 80.00 C24.00 78.38 23.78 76.78 23.61 75.21 C23.45 73.65 23.34 72.10 23.30 70.59 C23.26 69.08 23.30 67.61 23.38 66.16 C23.47 64.71 23.63 63.31 23.82 61.91 C24.00 60.52 24.24 59.15 24.49 57.78 C24.73 56.42 24.99 55.06 25.28 53.71 C25.57 52.36 25.85 51.00 26.21 49.69 C26.56 48.37 26.93 47.07 27.40 45.82 C27.88 44.58 28.41 43.38 29.05 42.24 C29.68 41.10 30.42 40.03 31.20 38.99 C31.99 37.96 32.87 36.99 33.75 36.02 C34.63 35.05 35.57 34.12 36.47 33.17 C37.37 32.21 38.27 31.26 39.16 30.31 C40.05 29.35 40.91 28.37 41.82 27.42 C42.72 26.47 43.61 25.52 44.58 24.62 C45.55 23.72 46.55 22.85 47.63 22.04 C48.70 21.23 49.85 20.48 51.04 19.75 C52.23 19.03 53.50 18.37 54.76 17.72 C56.02 17.06 57.33 16.45 58.62 15.82 C59.91 15.20 61.22 14.59 62.51 13.98 C63.81 13.37 65.10 12.76 66.40 12.16 C67.70 11.56 69.00 10.97 70.31 10.39 C71.62 9.81 72.95 9.25 74.26 8.67 C75.56 8.10 76.91 7.57 78.16 6.95 C79.41 6.34 81.16 5.33 81.76 5.00 C82.36 4.67 81.98 4.36 81.76 5.00 C81.53 5.64 80.81 7.53 80.43 8.86 C80.05 10.19 79.77 11.61 79.47 13.00 C79.17 14.39 78.92 15.80 78.64 17.19 C78.36 18.59 78.10 19.99 77.82 21.36 C77.53 22.73 77.23 24.08 76.91 25.42 C76.60 26.75 76.26 28.06 75.92 29.37 C75.59 30.68 75.24 31.98 74.92 33.28 C74.59 34.58 74.28 35.89 73.97 37.20 C73.66 38.50 73.38 39.83 73.06 41.11 C72.73 42.40 72.43 43.69 72.04 44.91 C71.65 46.14 71.22 47.34 70.72 48.47 C70.21 49.60 69.63 50.68 69.00 51.72 C68.37 52.76 67.66 53.74 66.95 54.72 C66.25 55.70 65.49 56.65 64.77 57.63 C64.05 58.60 63.33 59.58 62.63 60.56 C61.93 61.55 61.27 62.56 60.56 63.54 C59.86 64.52 59.18 65.52 58.41 66.46 C57.63 67.40 56.83 68.32 55.94 69.18 C55.04 70.04 54.07 70.84 53.03 71.62 C52.00 72.39 50.87 73.11 49.72 73.82 C48.58 74.53 47.37 75.21 46.15 75.89 C44.93 76.56 43.69 77.23 42.42 77.88 C41.15 78.54 39.87 79.19 38.53 79.82 C37.20 80.45 35.84 81.07 34.41 81.65 C32.99 82.24 31.51 82.81 29.99 83.35 C28.46 83.90 26.04 84.66 25.25 84.92 C24.46 85.18 25.41 85.74 25.25 84.92Z M27.71 80.71 C27.89 80.22 28.40 78.71 28.83 77.75 C29.25 76.80 29.77 75.90 30.26 74.98 C30.75 74.07 31.26 73.16 31.76 72.25 C32.27 71.34 32.79 70.44 33.31 69.53 C33.82 68.63 34.35 67.74 34.88 66.84 C35.41 65.94 35.95 65.05 36.49 64.16 C37.02 63.27 37.57 62.38 38.12 61.50 C38.67 60.61 39.22 59.73 39.78 58.85 C40.33 57.97 40.89 57.10 41.46 56.22 C42.02 55.34 42.59 54.47 43.17 53.60 C43.74 52.73 44.32 51.86 44.90 51.00 C45.48 50.13 46.07 49.27 46.65 48.41 C47.24 47.55 47.84 46.69 48.43 45.83 C49.03 44.98 49.63 44.12 50.24 43.27 C50.84 42.42 51.45 41.57 52.06 40.73 C52.68 39.88 53.29 39.04 53.91 38.19 C54.53 37.35 55.16 36.51 55.79 35.68 C56.41 34.84 57.05 34.01 57.68 33.18 C58.32 32.35 58.96 31.52 59.60 30.69 C60.25 29.87 60.90 29.05 61.55 28.23 C62.20 27.41 62.86 26.59 63.52 25.78 C64.18 24.96 64.85 24.15 65.52 23.35 C66.19 22.54 66.87 21.74 67.55 20.94 C68.24 20.14 68.92 19.34 69.62 18.56 C70.32 17.77 70.99 16.96 71.75 16.22 C72.50 15.48 73.75 14.47 74.15 14.12 C74.56 13.77 74.41 13.65 74.15 14.12 C73.89 14.58 73.16 16.01 72.59 16.90 C72.03 17.80 71.39 18.63 70.78 19.48 C70.17 20.34 69.56 21.18 68.94 22.03 C68.33 22.88 67.71 23.73 67.10 24.57 C66.49 25.42 65.87 26.26 65.26 27.11 C64.64 27.95 64.03 28.80 63.42 29.64 C62.81 30.49 62.20 31.33 61.59 32.18 C60.98 33.03 60.37 33.87 59.76 34.72 C59.15 35.56 58.55 36.41 57.94 37.26 C57.34 38.10 56.73 38.95 56.13 39.80 C55.53 40.65 54.93 41.50 54.33 42.35 C53.73 43.19 53.13 44.04 52.53 44.89 C51.94 45.74 51.34 46.60 50.75 47.45 C50.15 48.30 49.56 49.15 48.97 50.00 C48.38 50.86 47.79 51.71 47.20 52.56 C46.61 53.42 46.02 54.27 45.44 55.13 C44.85 55.98 44.27 56.84 43.68 57.70 C43.10 58.55 42.52 59.41 41.94 60.27 C41.36 61.13 40.78 61.99 40.20 62.84 C39.62 63.70 39.04 64.56 38.46 65.42 C37.88 66.28 37.31 67.14 36.73 68.01 C36.15 68.87 35.58 69.73 35.00 70.59 C34.43 71.45 33.85 72.31 33.27 73.17 C32.69 74.03 32.12 74.89 31.53 75.75 C30.95 76.61 30.40 77.49 29.76 78.31 C29.12 79.14 28.05 80.31 27.71 80.71 C27.36 81.11 27.52 81.20 27.71 80.71Z"/><path d="M23.36 83.83 L27.14 86.01 L20.91 95.00 L18.24 93.46Z"/></svg>
+    <h1>Laurel Games</h1>
+  </a>
+  <a class="contact" href="mailto:hi@laurel.games">hi@laurel.games</a>
 
 <script>
-/* ----------------------------------------------------------------
-   Original Escher-style "impossible blocks" field: a hexagon split
-   into three rhombi reads as an isometric cube; packed edge-to-edge
-   the cubes form an ambiguous up/down staircase lattice. Three warm
-   tones (top / left / right faces) give the engraved, gravity-
-   defying look without copying any specific Escher print.
----------------------------------------------------------------- */
-const NS = "http://www.w3.org/2000/svg";
-const R  = 64;                         // cube radius
-const TOP = "#e3d7b8", LEFT = "#9a8a63", RIGHT = "#6c5d44", LINE = "#332a1e";
-const SQ3 = Math.sqrt(3);
+/* ------------------------------------------------------------------
+   The painting. Everything is laid down as brush dabs from a seeded
+   random stream, so the picture is the same on every visit and is
+   painted fresh for whatever screen it is on. Back to front: sky,
+   far hills, lake, near bank, the tree, and the child under it.
+------------------------------------------------------------------ */
+(function(){
+  const canvas = document.getElementById("scene");
+  const ctx = canvas.getContext("2d", { alpha:false });
+  const TAU = Math.PI * 2;
 
-const svg = document.getElementById("print");
-// canvas large enough to cover any screen; slice crops the overflow
-const W = 1920, H = 1280;
-svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-
-// dark base so any sub-pixel seams stay in-palette
-const bg = document.createElementNS(NS, "rect");
-bg.setAttribute("width", W); bg.setAttribute("height", H); bg.setAttribute("fill", RIGHT);
-svg.appendChild(bg);
-
-// pointy-top hexagon vertices (k = 0..5), angle = 60k - 90
-const hexV = (cx, cy) => {
-  const p = [];
-  for (let k = 0; k < 6; k++){
-    const a = (60*k - 90) * Math.PI/180;
-    p.push([cx + R*Math.cos(a), cy + R*Math.sin(a)]);
+  // ---- seeded random -------------------------------------------------
+  let seed = 0;
+  function reseed(s){ seed = s >>> 0; }
+  function rnd(){                       // mulberry32
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   }
-  return p; // [top, upper-right, lower-right, bottom, lower-left, upper-left]
-};
-const poly = (pts, fill) => {
-  const el = document.createElementNS(NS, "path");
-  el.setAttribute("d", "M" + pts.map(p => p.map(n => n.toFixed(1)).join(" ")).join(" L") + " Z");
-  el.setAttribute("fill", fill);
-  el.setAttribute("stroke", LINE);
-  el.setAttribute("stroke-width", "1.2");
-  el.setAttribute("stroke-linejoin", "round");
-  svg.appendChild(el);
-};
+  const R  = (a, b) => a + (b - a) * rnd();
+  const RG = () => (rnd() + rnd() + rnd()) / 1.5 - 1;   // roughly gaussian, -1..1
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = t => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
 
-const drawCube = (cx, cy) => {
-  const V = hexV(cx, cy);
-  const C = [cx, cy];
-  poly([V[5], V[0], V[1], C], TOP);   // top face
-  poly([C, V[1], V[2], V[3]], RIGHT); // right face
-  poly([C, V[3], V[4], V[5]], LEFT);  // left face
-};
-
-// hex packing: horizontal step √3·R, vertical step 1.5·R, odd rows offset
-const dx = SQ3 * R, dy = 1.5 * R;
-for (let row = -1; row * dy < H + R; row++){
-  const offset = (row & 1) ? dx/2 : 0;
-  for (let col = -1; col * dx < W + R; col++){
-    drawCube(col*dx + offset, row*dy);
+  // 1-D value noise for ridges and shorelines
+  function noise1(freq, octaves, seedShift){
+    const tbl = []; const save = seed; reseed(save ^ seedShift);
+    for (let i = 0; i < 512; i++) tbl.push(rnd());
+    reseed(save);
+    return x => {
+      let v = 0, amp = 1, f = freq, norm = 0;
+      for (let o = 0; o < octaves; o++){
+        const p = x * f, i = Math.floor(p), t = smooth(p - i);
+        v += amp * lerp(tbl[i & 511], tbl[(i + 1) & 511], t); norm += amp;
+        amp *= .5; f *= 2.1;
+      }
+      return v / norm;                  // 0..1
+    };
   }
-}
+
+  // ---- colour ---------------------------------------------------------
+  const hex = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const mix = (a, b, t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+  function ramp(stops){
+    stops = stops.map(s => [s[0], hex(s[1])]);
+    return t => {
+      t = clamp(t, 0, 1);
+      for (let i = 1; i < stops.length; i++){
+        if (t <= stops[i][0]){
+          const [t0, c0] = stops[i-1], [t1, c1] = stops[i];
+          return mix(c0, c1, (t - t0) / (t1 - t0));
+        }
+      }
+      return stops[stops.length-1][1];
+    };
+  }
+  function rgb2hsl(c){
+    const r = c[0]/255, g = c[1]/255, b = c[2]/255, mx = Math.max(r,g,b), mn = Math.min(r,g,b);
+    let h = 0, s = 0; const l = (mx + mn) / 2;
+    if (mx !== mn){
+      const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+      h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h /= 6;
+    }
+    return [h, s, l];
+  }
+  function hsl2rgb(h, s, l){
+    h = ((h % 1) + 1) % 1;
+    if (s === 0) return [l*255, l*255, l*255];
+    const q = l < .5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+    const f = t => { t = ((t % 1) + 1) % 1;
+      return t < 1/6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2/3 ? p + (q - p) * (2/3 - t) * 6 : p; };
+    return [f(h + 1/3) * 255, f(h) * 255, f(h - 1/3) * 255];
+  }
+  // broken colour: nudge hue, saturation and lightness a little per dab
+  function jit(c, dh, ds, dl){
+    const [h, s, l] = rgb2hsl(c);
+    return hsl2rgb(h + RG() * dh, clamp(s + RG() * ds, 0, 1), clamp(l + RG() * dl, 0, 1));
+  }
+  const css = (c, a) => `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+
+  // ---- brush ------------------------------------------------------------
+  function dab(x, y, w, h, rot, c, a){
+    ctx.beginPath();
+    ctx.ellipse(x, y, w / 2, h / 2, rot, 0, TAU);
+    ctx.fillStyle = css(c, a);
+    ctx.fill();
+  }
+  function stroke(x, y, len, ang, wid, c, a){
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+    ctx.strokeStyle = css(c, a); ctx.lineWidth = wid; ctx.lineCap = "round";
+    ctx.stroke();
+  }
+
+  // ---- the picture ---------------------------------------------------
+  function paint(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = window.innerWidth, H = window.innerHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    reseed(0x1A08E1);
+
+    const portrait = W < H * 1.05;
+    const S = clamp(H / 900, .6, 1.6);            // brush scale
+    const A = W * H;                              // for dab counts
+    const P = portrait ? {
+      horizon:.60, glowX:.70, trunkX:.27, trunkW:.16, canopy:[.36,.20,.62,.30],
+      shoreL:.80, shoreR:.87
+    } : {
+      horizon:.57, glowX:.68, trunkX:.23, trunkW:.075, canopy:[.30,.19,.44,.32],
+      shoreL:.80, shoreR:.88
+    };
+    const yH = H * P.horizon, gx = W * P.glowX;
+
+    // sky by height, then warmed near the afterglow
+    const skyRamp = ramp([[0,"#15205a"],[.30,"#284091"],[.58,"#5372c0"],[.80,"#93a0d8"],[.92,"#cfa9b5"],[1,"#eebb92"]]);
+    const glowRamp = ramp([[0,"#f6c89a"],[.5,"#e6a07c"],[1,"#c98aa0"]]);
+    function sky(x, y){
+      const t = clamp(y / yH, 0, 1);
+      let c = skyRamp(t);
+      const d = Math.hypot((x - gx) / (W * .55), (y - yH) / (H * .42));
+      const g = Math.pow(clamp(1 - d, 0, 1), 1.8) * smooth(t * 1.4 - .3);
+      return mix(c, glowRamp(d), g * .85);
+    }
+    const ridgeN1 = noise1(2.2 / W, 3, 0x51), ridgeN2 = noise1(3.4 / W, 3, 0x77);
+    const farRidge  = x => yH - H * (.045 + .075 * ridgeN1(x) * smooth((x - W * .05) / (W * .3)));
+    const nearRidge = x => yH - H * (.015 + .045 * ridgeN2(x + W * .3));
+    const farHill = hex("#4b4f8e"), nearHill = hex("#2e3468");
+
+    // shoreline of the near bank, higher on the left where the tree stands
+    const shoreN = noise1(4 / W, 2, 0x99);
+    const shore = x => H * lerp(P.shoreL, P.shoreR, smooth(x / W)) + H * .012 * (shoreN(x) - .5);
+
+    // ---- sky ----
+    {
+      const g = ctx.createLinearGradient(0, 0, 0, yH);
+      [0,.3,.58,.8,.92,1].forEach(t => g.addColorStop(t, css(skyRamp(t), 1)));
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, yH + 2);
+      const n = A / 130;
+      for (let i = 0; i < n; i++){
+        const x = R(-20, W + 20), y = R(-10, yH + 4);
+        let c = sky(x, y);
+        const r = rnd();
+        if (r < .10) c = jit(c, .07, .12, .06);                // violet / lavender flecks
+        else if (r < .14 && y > yH * .6) c = mix(c, hex("#f5d6a8"), .22); // pale warmth low down
+        else c = jit(c, .02, .06, .035);
+        const w = R(12, 30) * S, h = R(3.5, 7.5) * S;
+        dab(x, y, w, h, RG() * .16, c, R(.45, .8));
+      }
+      // the last of the sun, a luminous band just above the hills
+      for (let i = 0; i < A / 5000; i++){
+        const x = gx + RG() * W * .2, y = yH - Math.abs(RG()) * H * .07 - 2;
+        const c = jit(mix(hex("#fbe0b4"), hex("#f0b98c"), rnd()), .02, .05, .04);
+        dab(x, y, R(14, 34) * S, R(3, 6) * S, RG() * .08, c, R(.2, .45));
+      }
+      // a few stars high up, and the evening star near the glow
+      for (let i = 0; i < 26; i++){
+        const x = R(0, W), y = R(0, yH * .45);
+        dab(x, y, R(1, 1.8) * S, R(1, 1.8) * S, 0, hex("#f0ecff"), R(.2, .55));
+      }
+      dab(gx + W * .16, yH * .36, 2.6 * S, 2.6 * S, 0, hex("#fff6e6"), .9);
+      dab(gx + W * .16, yH * .36, 7 * S, 7 * S, 0, hex("#fff0d8"), .18);
+    }
+
+    // ---- far hills ----
+    function hillLayer(ridge, col, dark){
+      ctx.beginPath(); ctx.moveTo(0, yH + 2);
+      for (let x = 0; x <= W; x += 6) ctx.lineTo(x, ridge(x));
+      ctx.lineTo(W, yH + 2); ctx.closePath();
+      ctx.fillStyle = css(col, 1); ctx.fill();
+      const n = A / 900;
+      for (let i = 0; i < n; i++){
+        const x = R(0, W), top = ridge(x);
+        if (top >= yH) continue;
+        const y = R(top, yH), t = (y - top) / (yH - top + 1);
+        let c = mix(col, dark, t * .6);
+        const nearGlow = Math.pow(clamp(1 - Math.abs(x - gx) / (W * .35), 0, 1), 2);
+        c = mix(c, hex("#9a7a9a"), (1 - t) * nearGlow * .5);
+        c = jit(c, .03, .08, .04);
+        dab(x, y, R(10, 24) * S, R(3, 6) * S, RG() * .12, c, R(.35, .7));
+      }
+    }
+    hillLayer(farRidge, farHill, hex("#2a2f66"));
+    hillLayer(nearRidge, nearHill, hex("#1f2450"));
+
+    // ---- lake ----
+    function lake(x, y){
+      // the water mirrors the sky; nearer water reads darker and bluer
+      const yr = yH - (y - yH) * 1.15;
+      let c = sky(x, yr);
+      if (yr > nearRidge(x)) c = mix(c, nearHill, .8);
+      else if (yr > farRidge(x)) c = mix(c, farHill, .7);
+      const t = clamp((y - yH) / (H - yH), 0, 1);
+      c = mix(c, hex("#1b2a58"), .2 + .42 * t);
+      return c;
+    }
+    {
+      ctx.fillStyle = css(hex("#243a78"), 1); ctx.fillRect(0, yH, W, H - yH);
+      const n = A / 150;
+      for (let i = 0; i < n; i++){
+        const x = R(-40, W + 40), y = R(yH, H);
+        if (y > shore(x) + 8 * S) continue;
+        let c = lake(x, y);
+        const r = rnd();
+        if (r < .12) c = jit(c, .08, .12, .06);
+        else c = jit(c, .02, .06, .04);
+        const depth = (y - yH) / (H - yH);
+        const w = R(16, 46) * S * (0.7 + depth), h = R(2.5, 5) * S * (0.8 + depth * .6);
+        dab(x, y, w, h, RG() * .05, c, R(.4, .75));
+      }
+      // the afterglow lying on the water in broken strokes
+      const rows = (H - yH) / (5 * S);
+      for (let i = 0; i < rows; i++){
+        const y = yH + i * 5 * S + R(0, 3 * S);
+        const depth = (y - yH) / (H - yH);
+        if (y > shore(gx) - 20 * S) break;
+        const spread = W * (.02 + .12 * depth);
+        for (let k = 0; k < 2; k++){
+          const x = gx + RG() * spread;
+          const len = R(14, 60) * S * (0.6 + depth);
+          const c = mix(hex("#f3c48f"), hex("#d99a80"), depth);
+          stroke(x - len / 2, y, len, 0, R(2, 4) * S, jit(c, .02, .05, .05), R(.25, .55) * (1 - depth * .5));
+        }
+      }
+      // faint ripple lines
+      for (let i = 0; i < A / 9000; i++){
+        const x = R(0, W), y = R(yH + 10 * S, H);
+        if (y > shore(x) - 10 * S) continue;
+        const c = jit(mix(lake(x, y), hex("#c9d3f5"), .45), .03, .05, .04);
+        stroke(x, y, R(30, 120) * S, RG() * .02, R(1, 1.8) * S, c, R(.12, .3));
+      }
+    }
+
+    // ---- near bank ----
+    {
+      ctx.beginPath(); ctx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 6) ctx.lineTo(x, shore(x));
+      ctx.lineTo(W, H); ctx.closePath();
+      ctx.fillStyle = css(hex("#151d38"), 1); ctx.fill();
+      const cols = [hex("#1c2740"), hex("#22344a"), hex("#1d3138"), hex("#2a2f52"), hex("#213c3a")];
+      const n = A / 260;
+      for (let i = 0; i < n; i++){
+        const x = R(-20, W + 20), y = R(shore(x) - 4 * S, H + 10);
+        const c = jit(cols[(rnd() * cols.length) | 0], .03, .08, .05);
+        dab(x, y, R(8, 20) * S, R(4, 9) * S, RG() * .35, c, R(.4, .8));
+      }
+      // grass in loose tufts, leaning a little toward the water
+      for (let t = 0; t < A / 26000; t++){
+        const tx = R(-10, W + 10), ty = R(shore(tx) + 4 * S, H + 6), k = R(6, 22);
+        const lit = Math.pow(clamp(1 - Math.abs(tx - gx) / (W * .3), 0, 1), 2) * (1 - (ty - shore(tx)) / (H - shore(tx) + 1));
+        for (let i = 0; i < k; i++){
+          const x = tx + RG() * 22 * S, y = ty + RG() * 8 * S;
+          let c = mix(hex("#243d3a"), hex("#3a604f"), rnd());
+          c = mix(c, hex("#a8846c"), lit * .5);
+          stroke(x, y, R(4, 13) * S, -TAU / 4 + RG() * .55, R(1, 1.9) * S, jit(c, .03, .1, .06), R(.35, .75));
+        }
+      }
+      // wet edge catching the last light
+      for (let x = -10; x < W + 10; x += 4 * S){
+        const lit = .25 + .75 * Math.pow(clamp(1 - Math.abs(x - gx) / (W * .4), 0, 1), 1.5);
+        dab(x + RG() * 3, shore(x) + RG() * 2, R(6, 14) * S, R(1.2, 2.4) * S, 0, hex("#9fa8d8"), R(.15, .4) * lit);
+      }
+    }
+
+    // ---- the laurel tree ----
+    const tx0 = W * P.trunkX, tw = W * P.trunkW;              // base centre and width
+    const [ccx, ccy, crx, cry] = P.canopy;
+    const canopy = { x: W * ccx, y: H * ccy, rx: W * crx, ry: H * cry };
+    const yBase = shore(tx0) + H * .10, yTop = H * .40;
+    const trunkX = y => tx0 + W * .018 * Math.sin((yBase - y) / (yBase - yTop) * 2.2);  // gentle lean
+    const trunkW = y => tw * lerp(1.15, .55, smooth((yBase - y) / (yBase - yTop)));
+    {
+      // silhouette with root flare
+      ctx.beginPath();
+      ctx.moveTo(tx0 - tw * 1.3, yBase + 6);
+      for (let y = yBase; y >= yTop; y -= 8) ctx.lineTo(trunkX(y) - trunkW(y) / 2, y);
+      for (let y = yTop; y <= yBase; y += 8) ctx.lineTo(trunkX(y) + trunkW(y) / 2, y);
+      ctx.lineTo(tx0 + tw * 1.3, yBase + 6);
+      ctx.closePath(); ctx.fillStyle = css(hex("#1a1520"), 1); ctx.fill();
+      // bark in vertical dabs: cool on the shadow side, warm rim toward the afterglow
+      const n = (yBase - yTop) * tw / (18 * S * S);
+      for (let i = 0; i < n; i++){
+        const y = R(yTop - 10, yBase + 4), hw = trunkW(y) / 2;
+        const u = RG() * .95;                                  // -1 (left edge) .. 1 (right edge)
+        const x = trunkX(y) + u * hw;
+        let c;
+        if (u > .68) c = mix(hex("#33262a"), hex("#7a5442"), (u - .68) / .32);   // last light on the bark
+        else if (u < -.45) c = mix(hex("#1a1822"), hex("#262a42"), (-u - .45) / .55);
+        else c = mix(hex("#1e171d"), hex("#33262a"), rnd());
+        c = jit(c, .02, .05, .03);
+        dab(x, y, R(2.5, 6) * S, R(20, 46) * S, RG() * .06, c, R(.5, .85));
+      }
+    }
+    // limbs reaching up into the crown and out over the water
+    function limb(x, y, ang, len, wid, depth){
+      const ex = x + Math.cos(ang) * len, ey = y + Math.sin(ang) * len;
+      const cx = (x + ex) / 2 + RG() * len * .18, cy = (y + ey) / 2 + RG() * len * .18;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(cx, cy, ex, ey);
+      ctx.strokeStyle = css(hex("#1e1823"), 1); ctx.lineWidth = wid; ctx.lineCap = "round"; ctx.stroke();
+      if (depth > 0){
+        const k = 2 + (rnd() < .5 ? 1 : 0);
+        for (let i = 0; i < k; i++)
+          limb(ex, ey, ang + RG() * .9 - .15, len * R(.55, .8), wid * .6, depth - 1);
+      }
+    }
+    {
+      const top = yTop + 8, cx = trunkX(top);
+      const dirs = portrait ? [-2.5, -2.0, -1.55, -1.1, -.7, -.35] : [-2.6, -2.15, -1.75, -1.35, -1.0, -.65, -.3];
+      // limbs stay inside the crown; nothing bare pokes out past the leaves
+      ctx.save(); ctx.beginPath(); ctx.ellipse(canopy.x, canopy.y, canopy.rx * .95, canopy.ry * .95, 0, 0, TAU); ctx.clip();
+      dirs.forEach(a => limb(cx + RG() * tw * .2, top + R(0, 30) * S, a + RG() * .12, H * R(.16, .26), tw * R(.28, .42), 3));
+      ctx.restore();
+    }
+    // the crown: laurel leaves, dark and dense at blue hour. Only the rim that
+    // faces the sky picks up its light, and only the edge toward the afterglow
+    // is warmed, judged against the crown as a whole rather than each lobe.
+    function crownLight(x, y, r, outer){
+      const nx = (x - canopy.x) / canopy.rx, ny = (y - canopy.y) / canopy.ry;
+      const d = Math.hypot(nx, ny);
+      const up = clamp(-ny * .7 + .35, 0, 1);
+      // light reaches the outer clumps of the crown; inside stays dark
+      const rim = Math.max(smooth((d - .55) / .5), outer * Math.pow(r, 2.2) * .9);
+      return { sky: rim * up, warm: rim * clamp(nx * .8 + .1, 0, 1) * (1 - up * .4), d };
+    }
+    function cluster(cx, cy, rx, ry, density, light){
+      const n = (rx * ry * TAU / (S * S)) * density;
+      const outer = smooth((Math.hypot((cx - canopy.x) / canopy.rx, (cy - canopy.y) / canopy.ry) - .45) / .45);
+      const tone = RG() * .05;                                 // each clump a little lighter or darker
+      for (let i = 0; i < n; i++){
+        const a = rnd() * TAU, r = Math.sqrt(rnd());
+        const x = cx + Math.cos(a) * r * rx, y = cy + Math.sin(a) * r * ry;
+        const l = light(x, y, r, outer);
+        let c = mix(hex("#0a1511"), hex("#183a2c"), clamp(rnd() * .8 + tone, 0, 1));
+        c = mix(c, hex("#48657f"), l.sky * .55 * R(.4, 1));
+        c = mix(c, hex("#8f7a55"), l.warm * .6 * R(.3, 1));
+        if (rnd() < .03) c = mix(c, hex("#4d6fb5"), .45);   // a stray leaf catching pure sky
+        c = jit(c, .03, .08, .04);
+        const L = R(7, 13) * S, Wd = L * R(.3, .45);
+        const rot = rnd() < .6 ? RG() * .8 : rnd() * Math.PI;   // most leaves hang
+        dab(x, y, Wd, L, rot, c, R(.8, 1));
+      }
+    }
+    {
+      const { x: cx, y: cy, rx, ry } = canopy;
+      // a rounded mass built from overlapping lobes, thinning to a lacy rim.
+      // The inner lobes get a dark underpainting first so no sky shows through
+      // the body of the crown.
+      // lobes sit on jittered rings so the whole body of the crown is covered
+      const inner = [];
+      [[0, 1], [.36, 7], [.7, 13]].forEach(([ring, count]) => {
+        for (let i = 0; i < count; i++){
+          const a = (i / count) * TAU + RG() * .25, r = ring + RG() * .06;
+          inner.push([cx + Math.cos(a) * r * rx, cy + Math.sin(a) * r * ry, rx * R(.3, .4), ry * R(.36, .5), R(.05, .09)]);
+        }
+      });
+      dab(cx, cy, rx * 1.5, ry * 1.5, 0, hex("#0b1712"), 1);
+      inner.forEach(([lx, ly, lrx, lry]) => dab(lx, ly, lrx * 1.8, lry * 1.8, 0, hex("#0b1712"), 1));
+      inner.forEach(([lx, ly, lrx, lry, d]) => cluster(lx, ly, lrx, lry, d, crownLight));
+      for (let i = 0; i < 26; i++){   // outer lobes, thinner, for a lacy rim
+        const a = (i / 26) * TAU + RG() * .2;
+        cluster(cx + Math.cos(a) * rx * R(.78, 1.0), cy + Math.sin(a) * ry * R(.78, 1.0), rx * R(.14, .24), ry * R(.18, .3), R(.03, .06), crownLight);
+      }
+      // a few strands hanging from the underside
+      for (let i = 0; i < (portrait ? 3 : 5); i++){
+        const sx = cx + RG() * rx * .5, sy = cy + ry * R(.7, 1.0);
+        for (let k = 0; k < R(2, 5); k++)
+          cluster(sx + RG() * 6 * S, sy + k * 10 * S, 7 * S, 7 * S, .1, crownLight);
+      }
+    }
+
+    // ---- the child, sitting against the trunk, lit by the game ----
+    {
+      const h = H * .115;                                     // seat to crown of head
+      const kx = trunkX(yBase - h * .3) + trunkW(yBase - h * .3) / 2 + h * .05;
+      const ky = yBase - 2 * S;                               // where they sit
+      const skin = hex("#141327");
+      const part = (x, y, w, hh, rot, c = skin, a = .96) => dab(kx + x * h, ky + y * h, w * h, hh * h, rot, c, a);
+      // pool of light on the grass first, so the figure sits over it
+      const dx = kx + h * .48, dy = ky - h * .5;               // the handheld
+      const glow = hex("#cfe9b8");
+      ctx.globalCompositeOperation = "lighter";
+      {
+        const g = ctx.createRadialGradient(dx, dy + h * .1, 0, dx, dy + h * .1, h * 1.25);
+        g.addColorStop(0, css(glow, .28)); g.addColorStop(.35, css(glow, .10)); g.addColorStop(1, css(glow, 0));
+        ctx.fillStyle = g; ctx.fillRect(dx - h * 1.3, dy - h * 1.2, h * 2.6, h * 2.5);
+        for (let i = 0; i < 60; i++){                         // lit grass blades around them
+          const a = rnd() * Math.PI, r = R(.2, 1.0) * h;
+          const x = dx + Math.cos(a) * r * 1.3, y = ky + R(-.02, .12) * h;
+          stroke(x, y, R(4, 10) * S, -TAU / 4 + RG() * .5, R(1, 1.8) * S, glow, R(.08, .3) * (1 - r / h));
+        }
+      }
+      ctx.globalCompositeOperation = "source-over";
+      // legs: knees drawn up
+      part(.32, -.22, .40, .17, -.55);        // thigh
+      part(.50, -.10, .16, .36, .15);         // shin
+      part(.54, .02, .16, .09, 0);            // foot
+      part(.24, -.18, .34, .15, -.5, hex("#191830"));   // far thigh
+      // body leaning back on the bark, arms forward to the handheld
+      part(.14, -.48, .34, .58, .12);         // torso
+      part(.30, -.55, .30, .11, -.35);        // upper arm
+      part(.42, -.48, .22, .09, .55);         // forearm
+      // head, tilted down toward the screen
+      part(.22, -.86, .30, .32, .1);
+      part(.20, -.94, .32, .22, .05, hex("#100f22"));   // hair
+      // the handheld and its light on the face, hands and knees
+      ctx.fillStyle = css(hex("#eef8df"), .95);
+      ctx.beginPath(); ctx.ellipse(dx, dy, h * .075, h * .05, .1, 0, TAU); ctx.fill();
+      ctx.globalCompositeOperation = "lighter";
+      const lit = (x, y, w, hh, rot, a) => dab(kx + x * h, ky + y * h, w * h, hh * h, rot, glow, a);
+      lit(.31, -.78, .10, .15, .3, .32);       // face
+      lit(.27, -.71, .09, .05, .2, .25);       // chin / neck
+      lit(.44, -.52, .10, .07, .5, .45);       // hands
+      lit(.36, -.40, .16, .07, -.4, .30);      // chest
+      lit(.50, -.30, .12, .08, -.6, .30);      // knee
+      lit(.46, -.20, .10, .06, .1, .2);        // shin
+      {
+        const g = ctx.createRadialGradient(dx, dy, 0, dx, dy, h * .6);
+        g.addColorStop(0, css(glow, .35)); g.addColorStop(1, css(glow, 0));
+        ctx.fillStyle = g; ctx.fillRect(dx - h * .6, dy - h * .6, h * 1.2, h * 1.2);
+      }
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    canvas.classList.add("ready");
+  }
+
+  paint();
+  let last = [window.innerWidth, window.innerHeight], timer = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const w = window.innerWidth, h = window.innerHeight;
+      // repaint for a real resize, not for a phone's address bar sliding
+      if (w !== last[0] || Math.abs(h - last[1]) > 140){ last = [w, h]; paint(); }
+    }, 180);
+  });
+})();
 </script>
 </body>
 </html>
